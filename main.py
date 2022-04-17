@@ -1,7 +1,6 @@
-from const import *  # здесь находятся все коды, их не выкладываем на гит хаб, передаем в дискорде
+# from const import *  # здесь находятся все коды, их не выкладываем на гит хаб, передаем в дискорде
 import logging
-from telegram.ext import Updater, MessageHandler, Filters
-from telegram.ext import CommandHandler
+from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 from telegram import ReplyKeyboardMarkup
 import requests
 import sys
@@ -30,13 +29,26 @@ def return_umbrella(update, context):
 
 # Найти ближайший аппарат и вывести фото
 def find_dev(update, context):
-    # картинка на ЯК с местоположением аппаратов и пользователя
-    map_request = "http://static-maps.yandex.ru/1.x/?ll=37.477935,55.663528&spn=0.01,0.01&l=map&pt=37.482074,55.662759,pmdos~37.477911,55.661725,pmdos~37.479909,55.660584,pmdos"
-    response = requests.get(map_request)
+    pass
+
+
+# Вывести фото катры-схемы всех аппаратов
+def all_devs(bot, context):
+    coords = bot.message.location
+    coords_n = [coords['longitude'], coords['latitude']]
+
+    url = "http://static-maps.yandex.ru/1.x"
+    params = {
+        "ll": '37.477935,55.663528',
+        "spn": "0.01,0.01",
+        "l": "map",
+        'pt': '37.482074,55.662759,pmdos~37.477911,55.661725,pmdos~37.479909,55.660584,pmdos'
+    }
+    params['pt'] = params['pt'] + '~' + str(coords_n[0]) + ',' + str(coords_n[1])
+    response = requests.get(url, params=params)
 
     if not response:
         print("Ошибка выполнения запроса:")
-        print(map_request)
         print("Http статус:", response.status_code, "(", response.reason, ")")
         sys.exit(1)
 
@@ -45,13 +57,9 @@ def find_dev(update, context):
         file.write(response.content)
 
     context.bot.send_photo(chat_id=1740531612, photo=open(map_file, 'rb'))
+
     # Удаляем за собой файл с изображением.
     os.remove(map_file)
-
-
-# Вывести фото катры-схемы всех аппаратов
-def all_devs(update, context):
-    pass
 
 
 # Написать в поддержку
@@ -76,7 +84,7 @@ def take_instructions(update, context):
 
 
 def main():
-    updater = Updater(TOKEN)
+    updater = Updater(Token)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("find_dev", find_dev))
     dp.add_handler(CommandHandler("take_umbrella", take_umbrella))
@@ -87,11 +95,11 @@ def main():
     dp.add_handler(CommandHandler("return_instructions", return_instructions))
     dp.add_handler(CommandHandler("take_instructions", take_instructions))
 
+    dp.add_handler(MessageHandler(Filters.location, all_devs))
+
     updater.start_polling()
 
-    dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
-
 
     updater.idle()
 
@@ -99,11 +107,9 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-
-#координаты
-#37.477935,55.663528 центр карты
-#автоматы
-#37.482074,55.662759
-#37.477911,55.661725
-#37.479909,55.660584
+# координаты
+# 37.477935,55.663528 центр карты
+# автоматы
+# 37.482074,55.662759
+# 37.477911,55.661725
+# 37.479909,55.660584
