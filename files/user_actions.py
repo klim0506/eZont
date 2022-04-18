@@ -20,7 +20,7 @@ def taken_umbrella(path_to_db, system_index):
     connect = sqlite3.connect(path_to_db)
     cursor = connect.cursor()
 
-    col_umbr = len(cursor.execute(f"SELECT id FROM taken WHERE returned='False'").fetchall())
+    col_umbr = len(cursor.execute(f"SELECT id FROM taken WHERE returned=0").fetchall())
 
     if col_umbr < 3:
         cursor.execute(f"INSERT INTO taken (time) VALUES ('{datetime.datetime.now()}')")
@@ -40,13 +40,17 @@ def returned_umbrella(path_to_db, system_index):
 
     col_umbr = len(cursor.execute(f"SELECT id FROM taken WHERE returned=0").fetchall())
 
-    if col_umbr != 0:
+    if col_umbr > 0:
         min_id_umb = min(cursor.execute(f"SELECT id FROM taken WHERE returned=0").fetchall()[0])
         cursor.execute(f"UPDATE taken SET return_time = '{datetime.datetime.now()}' WHERE id = '{min_id_umb}'")
         cursor.execute(f"UPDATE taken SET returned = 1 WHERE id = '{min_id_umb}'")
         cursor.execute(f"UPDATE points SET free_cell = free_cell - 1 WHERE system_index = '{system_index}'")
         cursor.execute(f"UPDATE points SET fill_cell = fill_cell + 1 WHERE system_index = '{system_index}'")
         connect.commit()
+        return True
+
+    else:
+        return False
 
 
 # Вернуть инструкции

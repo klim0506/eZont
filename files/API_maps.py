@@ -35,7 +35,7 @@ def near_app_map(user_coord, device_coord):
     response = requests.get(f"https://static-maps.yandex.ru/1.x/?pt={user_coord[1]},{user_coord[0]},"
                             f"org~{device_coord[1]},{device_coord[0]},round&l=map")
 
-    with open('images/near_app_map.jpg', 'wb') as file:
+    with open('files/images/near_app_map.jpg', 'wb') as file:
         file.write(response.content)
 
 
@@ -53,7 +53,7 @@ def all_app_map(path_to_db):
 
     response = requests.get(url[:-1])
 
-    with open('images/all_app_map.jpg', 'wb') as file:
+    with open('files/images/all_app_map.jpg', 'wb') as file:
         file.write(response.content)
 
 
