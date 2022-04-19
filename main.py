@@ -1,12 +1,13 @@
 from const import *
 from files.API_maps import *
 from files.user_actions import *
-from telegram.ext import Updater, CommandHandler
-from telegram import ReplyKeyboardMarkup, InputMessageContent
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import ReplyKeyboardMarkup
+from time import sleep
 
-
-start_keyboard = [['/find_dev', '/take_umbrella', '/return_umbrella'], ['/all_devs', '/help_me']]
+start_keyboard = [['/find_dev', '/take_umbrella', '/return_umbrella'], ['/all_devs', '/about_us', '/help_me']]
 start_markup = ReplyKeyboardMarkup(start_keyboard, one_time_keyboard=False)
+INPUT_TEXT = ''
 
 
 def start(update, context):
@@ -18,7 +19,7 @@ def start(update, context):
 
 # Взять зонт
 def take_umbrella(update, context):
-    nums_keyboard = [['/1111', '/2222', '/3333']]
+    nums_keyboard = [['1111', '2222', '3333']]
     nums_markup = ReplyKeyboardMarkup(nums_keyboard, one_time_keyboard=True, input_field_placeholder='device_id?')
 
     update.message.reply_text(
@@ -26,8 +27,11 @@ def take_umbrella(update, context):
         reply_markup=nums_markup
     )
 
-    # ToDo: принять номер аппарата, для примера взят 1111
-    device_system_index = 1111
+    sleep(5)
+    device_system_index = INPUT_TEXT
+
+    if not device_system_index.isnumeric():
+        device_system_index = '333'
 
     if not returned_umbrella('db/data.db', device_system_index):
         update.message.reply_text("Нельзя взять больше 3 зонтов на одного пользователя!", reply_markup=start_markup)
@@ -39,7 +43,7 @@ def take_umbrella(update, context):
 
 # Вернуть зонт
 def return_umbrella(update, context):
-    nums_keyboard = [['/1111', '/2222', '/3333']]
+    nums_keyboard = [['1111', '2222', '3333']]
     nums_markup = ReplyKeyboardMarkup(nums_keyboard, one_time_keyboard=True)
 
     update.message.reply_text(
@@ -47,8 +51,8 @@ def return_umbrella(update, context):
         reply_markup=nums_markup
     )
 
-    # ToDo: принять номер аппарата, для примера взят 1111
-    device_system_index = 1111
+    sleep(5)
+    device_system_index = INPUT_TEXT
 
     if not taken_umbrella('db/data.db', device_system_index):
         update.message.reply_text("Пока что у вас нет зонтов, чтобы их вернуть", reply_markup=start_markup)
@@ -60,11 +64,9 @@ def return_umbrella(update, context):
 
 # Найти ближайший аппарат и вывести фото
 def find_dev(update, context):
-    # ToDo: принять координаты у пользователя, пока что их заменяет переменная user_coordinates,
-    #  которая указывает на наш технопарк
     user_coordinates = (55.660968, 37.476088)
 
-    data = near_app('db/data.db', 55.660968, 37.476088)
+    data = near_app('db/data.db', user_coordinates[0], user_coordinates[1])
     near_app_map(user_coordinates, (data['latitude'], data['longitude']))
 
     user_id = update.message['chat']['id']
@@ -88,8 +90,12 @@ def all_devs(update, context):
 
 # Написать в поддержку
 def support(update, context):
-    update.message.reply_text("Не нашли ответ на свой вопрос? Просто напишите его следующим сообщением")
-    # ToDo: прочитать ответ на сообщение и занести его в БД
+    update.message.reply_text("Мы добавим эту функцию позже)")
+
+
+def input_func(update, context):
+    INPUT_TEXT = update.message.text
+    print(INPUT_TEXT)
 
 
 # Вывести инструкции по работе программы и бота
@@ -116,19 +122,20 @@ def main():
 
     dp = updater.dispatcher
 
+    dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("find_dev", find_dev))
     dp.add_handler(CommandHandler("take_umbrella", take_umbrella))
     dp.add_handler(CommandHandler("return_umbrella", return_umbrella))
     dp.add_handler(CommandHandler("all_devs", all_devs))
+    dp.add_handler(CommandHandler("about_us", description))
     dp.add_handler(CommandHandler("support", support))
     dp.add_handler(CommandHandler("help_me", send_instructions))
     dp.add_handler(CommandHandler("how_to_return_umbrella", return_instructions))
     dp.add_handler(CommandHandler("how_to_take_umbrella", take_instructions))
     dp.add_handler(CommandHandler("description_of_project", description))
+    # dp.add_handler(MessageHandler(Filters.text, input_func))
 
     updater.start_polling()
-
-    dp.add_handler(CommandHandler("start", start))
 
     updater.idle()
 
